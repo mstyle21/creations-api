@@ -19,6 +19,7 @@ router.get("/all", verifyToken, async (req, res) => {
 
   return res.status(200).json(categories);
 });
+
 router.get("/", verifyToken, async (req: Request<{}, {}, {}, StatsQuery>, res: Response) => {
   const { search, page, perPage } = req.query;
 
@@ -41,6 +42,10 @@ router.get("/", verifyToken, async (req: Request<{}, {}, {}, StatsQuery>, res: R
 
   const categories = await categoryRepository.find({
     where: where,
+    relations: {
+      products: true,
+      packages: true,
+    },
     take: limit,
     skip: skip,
   });

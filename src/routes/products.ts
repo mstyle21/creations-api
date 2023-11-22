@@ -1,12 +1,12 @@
 import express, { Request, Response } from "express";
 import MysqlDataSource from "../config/data-source";
 import verifyToken from "../middleware/verifyToken";
-import { FindOperator, In, Like } from "typeorm";
+import { FindOperator, In, Like, Not } from "typeorm";
 import { Product } from "../entity/Product";
 import { Category } from "../entity/Category";
 import multer from "multer";
 import path from "path";
-import { randomHash } from "../utils";
+import { generateSlug, randomHash } from "../utils";
 import { ProductImage } from "../entity/ProductImage";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
@@ -60,6 +60,7 @@ router.get("/", verifyToken, async (req: Request<{}, {}, {}, StatsQuery>, res: R
       images: true,
     },
     order: {
+      id: "DESC",
       images: {
         order: "ASC",
       },
@@ -110,10 +111,18 @@ router.post("/", verifyToken, upload.array("images"), async (req: Request<{}, {}
 
     product.categories = await categoryRepository.findBy({ id: In(categories) });
 
+    let slug = generateSlug(name);
+    let counter = 1;
+    while ((await productRepository.findBy({ slug: slug })).length) {
+      slug += `-${counter}`;
+      counter++;
+    }
+
+    product.slug = slug;
+
     const newProduct = await productRepository.save(product);
 
     const images = req.files as Express.Multer.File[];
-
     if (images.length) {
       const imgOrder = JSON.parse(imagesOrder);
       const folderPath = path.join(PRODUCT_IMG_FOLDER, newProduct.id.toString());
@@ -184,16 +193,81 @@ router.put(
     product.images = product.images.map((productImage) => {
       if (imgOrder[productImage.filename] !== undefined) {
         productImage.order = imgOrder[productImage.filename];
-        console.log(productImage);
       }
       return productImage;
     });
-    console.log(product);
+
+    let slug = generateSlug(name);
+    let counter = 1;
+    while ((await productRepository.findBy({ slug: slug, id: Not(product.id) })).length) {
+      slug += `-${counter}`;
+      counter++;
+    }
+
+    product.slug = slug;
 
     await productRepository.save(product);
+
+    const images = req.files as Express.Multer.File[];
+    if (images.length) {
+      const imgOrder = JSON.parse(imagesOrder);
+      const folderPath = path.join(PRODUCT_IMG_FOLDER, product.id.toString());
+
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+      }
+
+      images.forEach((image) => {
+        const imageHash = randomHash(6);
+        const imageName = `${imageHash}.${image.originalname.split(".").pop()}`;
+
+        fs.writeFileSync(path.join(folderPath, imageName), image.buffer);
+
+        const productImage = new ProductImage();
+        productImage.product = product;
+        productImage.filename = imageName;
+        productImage.order = imgOrder[image.originalname];
+
+        productImageRepository.save(productImage);
+      });
+    }
 
     return res.status(201).json({ message: "Product updated!" });
   }
 );
+
+router.delete("/image/:imageId", verifyToken, async (req, res) => {
+  const imageId = req.params.imageId;
+
+  const productImage = await productImageRepository.findOne({
+    where: { id: Number(imageId) },
+    relations: {
+      product: {
+        images: true,
+      },
+    },
+  });
+
+  if (!productImage) {
+    return res.status(400).json({ message: "Invalid request!" });
+  }
+
+  const folderPath = path.join(PRODUCT_IMG_FOLDER, productImage.product.id.toString());
+  const filePath = path.join(folderPath, productImage.filename);
+
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  await productImageRepository.remove(productImage);
+
+  productImage.product.images.forEach(async (image) => {
+    if (image.order > productImage.order) {
+      await productImageRepository.save({ ...image, order: image.order - 1 });
+    }
+  });
+
+  return res.status(204).json({ message: "Product image deleted" });
+});
 
 export default router;

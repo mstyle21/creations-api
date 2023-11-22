@@ -20,6 +20,8 @@ export class Product {
   price: number;
   @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
   status: string;
+  @Column()
+  slug: string;
   @ManyToMany(() => Category, (category) => category.products)
   @JoinTable()
   categories: Category[];

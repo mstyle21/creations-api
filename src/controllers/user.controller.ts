@@ -1,9 +1,10 @@
-import express from "express";
+import { NextFunction, Request, Response } from "express";
 import MysqlDataSource from "../config/data-source";
 import { User } from "../entity/User";
+import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import { validationResult } from "express-validator";
 
 dotenv.config();
 
@@ -14,7 +15,6 @@ export type JWTPayloadData = {
   role: string;
 };
 
-const router = express.Router();
 let jwtSecretKey: string;
 if (process.env.JWT_SECRET_KEY) {
   jwtSecretKey = process.env.JWT_SECRET_KEY;
@@ -22,17 +22,13 @@ if (process.env.JWT_SECRET_KEY) {
   throw new Error("JWT_SECRET_KEY is not set. Please check .env file.");
 }
 
-router.post("/register", (req, res) => {
-  //register
-});
-
-router.post("/login", async (req, res) => {
-  //login here
-  const { email, password } = req.body;
-
-  if (!(email && password)) {
-    return res.status(400).json({ message: "Invalid inputs!" });
+export const userLogin = async (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
+  const { email, password } = req.body;
 
   let user = await MysqlDataSource.manager.findOne(User, {
     where: { email: email, status: "active" },
@@ -60,6 +56,6 @@ router.post("/login", async (req, res) => {
   }
 
   return res.status(400).json({ message: "Invalid credentials!" });
-});
+};
 
-export default router;
+export const userRegister = async (req: Request, res: Response, next: NextFunction) => {};

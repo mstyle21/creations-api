@@ -1,26 +1,23 @@
-import express, { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
-import verifyToken from "../middleware/verifyToken";
-import { FindOperator, Like } from "typeorm";
-
-const router = express.Router();
+import { validationResult } from "express-validator";
+import { FindOperator } from "typeorm";
 
 const categoryRepository = MysqlDataSource.getRepository(Category);
+
+export const getAllCategories = async (req: Request, res: Response, next: NextFunction) => {
+  const categories = await categoryRepository.find();
+
+  return res.status(200).json(categories);
+};
 
 interface StatsQuery extends qs.ParsedQs {
   search?: string;
   page?: string;
   perPage?: string;
 }
-
-router.get("/all", verifyToken, async (req, res) => {
-  const categories = await categoryRepository.find();
-
-  return res.status(200).json(categories);
-});
-
-router.get("/", verifyToken, async (req: Request<{}, {}, {}, StatsQuery>, res: Response) => {
+export const getCategories = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
   const { search, page, perPage } = req.query;
 
   let pag = 1;
@@ -56,18 +53,15 @@ router.get("/", verifyToken, async (req: Request<{}, {}, {}, StatsQuery>, res: R
     count: countFilteredCategories.length,
     pages: Math.floor(countFilteredCategories.length / limit) + 1,
   });
-});
+};
 
-/**
- * POST METHOD
- * Create new category
- */
-router.post("/", verifyToken, async (req, res) => {
-  const { name, status } = req.body;
-
-  if (!name || !status) {
-    return res.status(400).json({ message: "Invalid request!" });
+export const createCategory = async (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
+  const { name, status } = req.body;
 
   const category = new Category();
   category.name = name;
@@ -76,13 +70,9 @@ router.post("/", verifyToken, async (req, res) => {
   await categoryRepository.save(category);
 
   return res.status(201).json({ message: "Category created!" });
-});
+};
 
-/**
- * PUT METHOD
- * Update an existing category
- */
-router.put("/:categoryId", verifyToken, async (req, res) => {
+export const updateCategory = async (req: Request, res: Response, next: NextFunction) => {
   const { name, status } = req.body;
   const categoryId = req.params.categoryId;
 
@@ -104,6 +94,7 @@ router.put("/:categoryId", verifyToken, async (req, res) => {
   await categoryRepository.save(category);
 
   return res.status(201).json({ message: "Category updated!" });
-});
-
-export default router;
+};
+function Like(arg0: string): FindOperator<string> | undefined {
+  throw new Error("Function not implemented.");
+}

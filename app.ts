@@ -9,9 +9,9 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import bodyParser from "body-parser";
 
-import userRouter from "./src/routes/user";
-import categoryRouter from "./src/routes/categories";
-import productRouter from "./src/routes/products";
+import userRouter from "./src/routes/user.route";
+import categoryRouter from "./src/routes/categories.route";
+import productRouter from "./src/routes/products.route";
 
 /**
  * App Variables

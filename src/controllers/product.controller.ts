@@ -3,7 +3,7 @@ import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Product } from "../entity/Product";
 import { ProductImage } from "../entity/ProductImage";
-import { FindOperator, In, Like, Not } from "typeorm";
+import { FindOperator, FindOptionsOrder, In, Like, Not } from "typeorm";
 import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
@@ -17,6 +17,8 @@ interface StatsQuery extends qs.ParsedQs {
   search?: string;
   page?: string;
   perPage?: string;
+  categories?: string[];
+  orderBy?: string;
 }
 
 interface ProductBody {
@@ -31,8 +33,15 @@ interface ProductBody {
   imagesOrder: string;
 }
 
+const sortByList: Record<string, object> = {
+  recent: { id: "DESC" },
+  name: { name: "ASC" },
+  priceAsc: { price: "ASC" },
+  priceDesc: { price: "DESC" },
+};
+
 export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage } = req.query;
+  const { search, page, perPage, categories, orderBy } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -46,9 +55,28 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
 
   const where: {
     name?: FindOperator<string>;
+    categories?: { id: FindOperator<number> };
   } = {};
   if (search) {
     where.name = Like(`%${search}%`);
+  }
+  if (categories && Array.isArray(categories)) {
+    const initial: number[] = [];
+    const parsedArray = categories.reduce((result, category) => {
+      const checkInt = parseInt(category.toString());
+      if (!isNaN(checkInt)) {
+        result.push(checkInt);
+      }
+
+      return result;
+    }, initial);
+    where.categories = {
+      id: In(parsedArray),
+    };
+  }
+  let order: FindOptionsOrder<Product> = { id: "DESC" };
+  if (orderBy && sortByList[orderBy] !== undefined) {
+    order = sortByList[orderBy];
   }
 
   let products = await productRepository.find({
@@ -57,9 +85,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       categories: true,
       images: true,
     },
-    order: {
-      id: "DESC",
-    },
+    order: order,
     take: limit,
     skip: skip,
   });

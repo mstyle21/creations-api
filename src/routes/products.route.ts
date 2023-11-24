@@ -15,7 +15,7 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 };
 const upload = multer({ storage: storage, fileFilter: filter });
 
-router.get("/", verifyToken, getProducts);
+router.get("/", getProducts);
 
 router.post("/", verifyToken, upload.array("images"), createProduct);
 

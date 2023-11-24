@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { validationResult } from "express-validator";
-import { FindOperator } from "typeorm";
+import { FindOperator, Like } from "typeorm";
 
 const categoryRepository = MysqlDataSource.getRepository(Category);
 
@@ -95,6 +95,3 @@ export const updateCategory = async (req: Request, res: Response, next: NextFunc
 
   return res.status(201).json({ message: "Category updated!" });
 };
-function Like(arg0: string): FindOperator<string> | undefined {
-  throw new Error("Function not implemented.");
-}

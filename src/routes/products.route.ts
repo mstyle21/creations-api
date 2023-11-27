@@ -1,7 +1,13 @@
 import express, { Request, Response } from "express";
 import verifyToken from "../middleware/verifyToken.middleware";
 import multer from "multer";
-import { createProduct, deleteProductImage, getProducts, updateProduct } from "../controllers/product.controller";
+import {
+  createProduct,
+  deleteProductImage,
+  getProductStats,
+  getProducts,
+  updateProduct,
+} from "../controllers/product.controller";
 
 const router = express.Router();
 
@@ -16,6 +22,8 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 const upload = multer({ storage: storage, fileFilter: filter });
 
 router.get("/", getProducts);
+
+router.get("/stats", verifyToken, getProductStats);
 
 router.post("/", verifyToken, upload.array("images"), createProduct);
 

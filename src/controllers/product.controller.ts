@@ -102,6 +102,12 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   });
 };
 
+export const getProductStats = async (req: Request, res: Response, next: NextFunction) => {
+  let products = await productRepository.find({ where: { status: "active" } });
+
+  return res.status(200).json(products);
+};
+
 export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Response, next: NextFunction) => {
   const { name, width, height, depth, stock, price, status, categories, imagesOrder } = req.body;
 

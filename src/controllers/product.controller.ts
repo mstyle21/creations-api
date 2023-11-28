@@ -110,10 +110,21 @@ export const getLatestProducts = async (req: Request, res: Response, next: NextF
     relations: { images: true },
     where: { status: "active" },
     order: { id: "DESC" },
-    take: 4,
+    take: 8,
   });
 
   return res.status(200).json(products);
+};
+
+export const getProductDetailsBySlug = async (req: Request, res: Response, next: NextFunction) => {
+  const productSlug = req.params.productSlug;
+
+  let product = await productRepository.findOne({
+    relations: { images: true, categories: true },
+    where: { status: "active", slug: productSlug },
+  });
+
+  return res.status(200).json(product);
 };
 
 export const getProductStats = async (req: Request, res: Response, next: NextFunction) => {

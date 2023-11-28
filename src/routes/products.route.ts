@@ -5,6 +5,7 @@ import {
   createProduct,
   deleteProductImage,
   getLatestProducts,
+  getProductDetailsBySlug,
   getProductStats,
   getProducts,
   updateProduct,
@@ -27,6 +28,8 @@ router.get("/", getProducts);
 router.get("/latest", getLatestProducts);
 
 router.get("/stats", verifyToken, getProductStats);
+
+router.get("/:productSlug", getProductDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), createProduct);
 

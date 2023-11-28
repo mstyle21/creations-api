@@ -54,9 +54,12 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   const skip = limit * pag - limit;
 
   const where: {
+    status: string;
     name?: FindOperator<string>;
     categories?: { id: FindOperator<number> };
-  } = {};
+  } = {
+    status: "active",
+  };
   if (search) {
     where.name = Like(`%${search}%`);
   }
@@ -100,6 +103,17 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
     count: countFilteredProducts.length,
     pages: Math.floor(countFilteredProducts.length / limit) + 1,
   });
+};
+
+export const getLatestProducts = async (req: Request, res: Response, next: NextFunction) => {
+  let products = await productRepository.find({
+    relations: { images: true },
+    where: { status: "active" },
+    order: { id: "DESC" },
+    take: 4,
+  });
+
+  return res.status(200).json(products);
 };
 
 export const getProductStats = async (req: Request, res: Response, next: NextFunction) => {

@@ -18,6 +18,8 @@ export class Product {
   stock: number;
   @Column({ type: "smallint" })
   price: number;
+  @Column({ type: "smallint", default: null })
+  oldPrice: number | null;
   @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
   status: string;
   @Column()

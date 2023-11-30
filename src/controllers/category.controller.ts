@@ -3,6 +3,7 @@ import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { validationResult } from "express-validator";
 import { FindOperator, Like } from "typeorm";
+import { paginatedResult, sleep } from "../utils";
 
 const categoryRepository = MysqlDataSource.getRepository(Category);
 
@@ -43,16 +44,13 @@ export const getCategories = async (req: Request<{}, {}, {}, StatsQuery>, res: R
       products: true,
       packages: true,
     },
+    order: { status: "ASC", id: "DESC" },
     take: limit,
     skip: skip,
   });
   const countFilteredCategories = await categoryRepository.find({ where });
 
-  return res.status(200).json({
-    items: categories,
-    count: countFilteredCategories.length,
-    pages: Math.floor(countFilteredCategories.length / limit) + 1,
-  });
+  return res.status(200).json(paginatedResult(categories, countFilteredCategories.length, limit));
 };
 
 export const createCategory = async (req: Request, res: Response, next: NextFunction) => {

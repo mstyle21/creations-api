@@ -28,3 +28,15 @@ export function capitalize(string: string): string {
 export function generateSlug(string: string): string {
   return string.toLowerCase().split(" ").join("-");
 }
+
+export function paginatedResult(filteredItems: unknown[], totalItems: number, perPage: number) {
+  return {
+    items: filteredItems,
+    count: totalItems,
+    pages: Math.ceil(totalItems / perPage),
+  };
+}
+
+export function sleep(time: number = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}

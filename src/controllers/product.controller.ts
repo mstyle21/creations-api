@@ -7,7 +7,7 @@ import { FindOperator, FindOptionsOrder, In, Like, Not } from "typeorm";
 import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
-import { generateSlug, randomHash } from "../utils";
+import { generateSlug, paginatedResult, randomHash } from "../utils";
 
 const productRepository = MysqlDataSource.getRepository(Product);
 const productImageRepository = MysqlDataSource.getRepository(ProductImage);
@@ -28,6 +28,7 @@ interface ProductBody {
   depth: number;
   stock: number;
   price: number;
+  oldPrice?: number;
   status: string;
   categories: [];
   imagesOrder: string;
@@ -77,9 +78,9 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       id: In(parsedArray),
     };
   }
-  let order: FindOptionsOrder<Product> = { id: "DESC" };
+  let order: FindOptionsOrder<Product> = { stock: "DESC", id: "DESC" };
   if (orderBy && sortByList[orderBy] !== undefined) {
-    order = sortByList[orderBy];
+    order = { ...order, ...sortByList[orderBy] };
   }
 
   let products = await productRepository.find({
@@ -98,11 +99,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
     return { ...product, images: product.images.sort((a, b) => a.order - b.order) };
   });
 
-  return res.status(200).json({
-    items: products,
-    count: countFilteredProducts.length,
-    pages: Math.floor(countFilteredProducts.length / limit) + 1,
-  });
+  return res.status(200).json(paginatedResult(products, countFilteredProducts.length, limit));
 };
 
 export const getLatestProducts = async (req: Request, res: Response, next: NextFunction) => {
@@ -134,7 +131,7 @@ export const getProductStats = async (req: Request, res: Response, next: NextFun
 };
 
 export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Response, next: NextFunction) => {
-  const { name, width, height, depth, stock, price, status, categories, imagesOrder } = req.body;
+  const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
 
   if (!name || !width || !height || !depth || !stock || !price || !status || !categories) {
     return res.status(400).json({ message: "Invalid request!" });
@@ -148,6 +145,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     product.depth = width;
     product.stock = stock;
     product.price = price;
+    product.oldPrice = oldPrice ?? null;
     product.status = status;
 
     product.categories = await categoryRepository.findBy({ id: In(categories) });
@@ -194,8 +192,12 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
   return res.status(201).json({ message: "Product created!" });
 };
 
-export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
-  const { name, width, height, depth, stock, price, status, categories, imagesOrder } = req.body;
+export const updateProduct = async (
+  req: Request<{ productId: string }, {}, ProductBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
   const productId = req.params.productId;
 
   if (!productId || !name || !width || !height || !depth || !stock || !price || !status) {
@@ -217,6 +219,7 @@ export const updateProduct = async (req: Request, res: Response, next: NextFunct
   product.depth = width;
   product.stock = stock;
   product.price = price;
+  product.oldPrice = oldPrice ?? null;
   product.status = status;
 
   product.categories = await categoryRepository.findBy({ id: In(categories) });

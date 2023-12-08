@@ -12,6 +12,7 @@ import bodyParser from "body-parser";
 import userRouter from "./src/routes/user.route";
 import categoryRouter from "./src/routes/categories.route";
 import productRouter from "./src/routes/products.route";
+import packageRouter from "./src/routes/packages.route";
 
 /**
  * App Variables
@@ -58,6 +59,8 @@ app.use("/api/user", userRouter);
 app.use("/api/categories", categoryRouter);
 
 app.use("/api/products", productRouter);
+
+app.use("/api/packages", packageRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on ${URL}:${PORT}/`);

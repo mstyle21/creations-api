@@ -102,6 +102,12 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   return res.status(200).json(paginatedResult(products, countFilteredProducts.length, limit));
 };
 
+export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+  let products = await productRepository.find({ relations: { images: true } });
+
+  return res.status(200).json(products);
+};
+
 export const getLatestProducts = async (req: Request, res: Response, next: NextFunction) => {
   let products = await productRepository.find({
     relations: { images: true },
@@ -210,7 +216,7 @@ export const updateProduct = async (
   });
 
   if (!product) {
-    return res.status(400).json({ message: "Something went wrong. Category not found!" });
+    return res.status(400).json({ message: "Something went wrong. Product not found!" });
   }
 
   product.name = name;

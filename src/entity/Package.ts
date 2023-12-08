@@ -1,6 +1,7 @@
 import { Column, Entity, JoinTable, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Category } from "./Category";
 import { PackageProduct } from "./PackageProduct";
+import { PackageImage } from "./PackageImage";
 
 @Entity()
 export class Package {
@@ -8,10 +9,23 @@ export class Package {
   id: number;
   @Column()
   name: string;
+  @Column({ type: "smallint" })
+  stock: number;
+  @Column({ type: "smallint" })
+  price: number;
+  @Column({ type: "smallint", default: null })
+  oldPrice: number | null;
+  @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
+  status: string;
+  @Column()
+  slug: string;
+  @OneToMany(() => PackageImage, (image) => image.package, { cascade: true })
+  @JoinTable()
+  images: PackageImage[];
   @ManyToOne(() => Category, (category) => category.packages)
   @JoinTable()
   category: Category;
-  @OneToMany(() => PackageProduct, (packageProduct) => packageProduct.package)
+  @OneToMany(() => PackageProduct, (packageProduct) => packageProduct.package, { cascade: true })
   products: PackageProduct[];
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", select: false })
   created: Date;

@@ -4,6 +4,7 @@ import multer from "multer";
 import {
   createProduct,
   deleteProductImage,
+  getAllProducts,
   getLatestProducts,
   getProductDetailsBySlug,
   getProductStats,
@@ -24,6 +25,8 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 const upload = multer({ storage: storage, fileFilter: filter });
 
 router.get("/", getProducts);
+
+router.get("/all", verifyToken, getAllProducts);
 
 router.get("/latest", getLatestProducts);
 

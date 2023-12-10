@@ -1,6 +1,6 @@
-uploads
-uploads/products/*
-uploads/packages/*
+# uploads
+# uploads/products/*
+# uploads/packages/*
 
 node_modules
 dist

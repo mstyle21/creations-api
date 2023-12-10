@@ -4,6 +4,7 @@ import { Category } from "../entity/Category";
 import { validationResult } from "express-validator";
 import { FindOperator, Like } from "typeorm";
 import { paginatedResult, sleep } from "../utils";
+import { PaginationQuery } from "../types";
 
 const categoryRepository = MysqlDataSource.getRepository(Category);
 
@@ -13,10 +14,8 @@ export const getAllCategories = async (req: Request, res: Response, next: NextFu
   return res.status(200).json(categories);
 };
 
-interface StatsQuery extends qs.ParsedQs {
+interface StatsQuery extends PaginationQuery {
   search?: string;
-  page?: string;
-  perPage?: string;
 }
 export const getCategories = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
   const { search, page, perPage } = req.query;

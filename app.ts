@@ -13,6 +13,7 @@ import userRouter from "./src/routes/user.route";
 import categoryRouter from "./src/routes/categories.route";
 import productRouter from "./src/routes/products.route";
 import packageRouter from "./src/routes/packages.route";
+import orderRouter from "./src/routes/orders.route";
 
 /**
  * App Variables
@@ -20,7 +21,9 @@ import packageRouter from "./src/routes/packages.route";
 dotenv.config();
 
 if (!process.env.APP_PORT || !process.env.APP_URL) {
-  console.error("Missing config items: APP_PORT or APP_URL. Please check .env file!");
+  console.error(
+    "Missing config items: APP_PORT or APP_URL. Please check .env file!"
+  );
   process.exit(1);
 }
 
@@ -61,6 +64,8 @@ app.use("/api/categories", categoryRouter);
 app.use("/api/products", productRouter);
 
 app.use("/api/packages", packageRouter);
+
+app.use("/api/orders", orderRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on ${URL}:${PORT}/`);

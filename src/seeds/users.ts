@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { UserRole } from "../entity/UserRole";
 
 const USERS: { email: string; password: string; role: string }[] = [
-  { email: "admin@creations.com", password: "panseluta", role: "admin" },
+  { email: "admin@creations.com", password: "creations", role: "admin" },
   { email: "user@creations.com", password: "creations", role: "user" },
 ];
 

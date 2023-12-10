@@ -2,6 +2,8 @@ import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColum
 import { Category } from "./Category";
 import { ProductImage } from "./ProductImage";
 
+export const productStatus = ["active", "inactive"];
+
 @Entity()
 export class Product {
   @PrimaryGeneratedColumn()
@@ -20,7 +22,7 @@ export class Product {
   price: number;
   @Column({ type: "smallint", default: null })
   oldPrice: number | null;
-  @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
+  @Column({ type: "enum", enum: productStatus, default: "active" })
   status: string;
   @Column()
   slug: string;

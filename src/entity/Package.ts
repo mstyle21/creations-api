@@ -3,6 +3,8 @@ import { Category } from "./Category";
 import { PackageProduct } from "./PackageProduct";
 import { PackageImage } from "./PackageImage";
 
+export const packageStatus = ["active", "inactive"];
+
 @Entity()
 export class Package {
   @PrimaryGeneratedColumn()
@@ -15,7 +17,7 @@ export class Package {
   price: number;
   @Column({ type: "smallint", default: null })
   oldPrice: number | null;
-  @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
+  @Column({ type: "enum", enum: packageStatus, default: "active" })
   status: string;
   @Column()
   slug: string;

@@ -1,6 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserRole } from "./UserRole";
 
+export const userStatus = ["active", "pending", "inactive", "deleted"];
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -14,7 +16,7 @@ export class User {
   @ManyToOne(() => UserRole)
   @JoinColumn()
   role: UserRole;
-  @Column({ type: "enum", default: "active", enum: ["active", "pending", "inactive", "deleted"] })
+  @Column({ type: "enum", default: "active", enum: userStatus })
   status: string;
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", select: false })
   created: Date;

@@ -121,6 +121,12 @@ export const getPackageDetailsBySlug = async (req: Request, res: Response, next:
   return res.status(200).json(packageDetails);
 };
 
+export const getPackageStats = async (req: Request, res: Response, next: NextFunction) => {
+  let packages = await packageRepository.find({ where: { status: "active" } });
+
+  return res.status(200).json(packages);
+};
+
 export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

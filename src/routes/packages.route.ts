@@ -1,6 +1,12 @@
 import express, { Request } from "express";
 import multer from "multer";
-import { createPackage, deletePackageImage, getPackages, updatePackage } from "../controllers/package.controller";
+import {
+  createPackage,
+  deletePackageImage,
+  getPackageDetailsBySlug,
+  getPackages,
+  updatePackage,
+} from "../controllers/package.controller";
 import verifyToken from "../middleware/verifyToken.middleware";
 import { packageValidation } from "../validations/package.validation";
 
@@ -16,6 +22,8 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 const upload = multer({ storage: storage, fileFilter: filter });
 
 router.get("/", getPackages);
+
+router.get("/:packageSlug", getPackageDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), packageValidation(), createPackage);
 

@@ -60,7 +60,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   const where: {
     status: string;
     name?: FindOperator<string>;
-    categories?: { id: FindOperator<number> };
+    category?: { id: FindOperator<number> };
   } = {
     status: "active",
   };
@@ -77,7 +77,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
 
       return result;
     }, initial);
-    where.categories = {
+    where.category = {
       id: In(parsedArray),
     };
   }
@@ -108,6 +108,17 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   });
 
   return res.status(200).json(paginatedResult(packages, countFilteredPackages.length, limit));
+};
+
+export const getPackageDetailsBySlug = async (req: Request, res: Response, next: NextFunction) => {
+  const packageSlug = req.params.packageSlug;
+
+  let packageDetails = await packageRepository.findOne({
+    relations: { images: true, products: { product: { images: true } }, category: true },
+    where: { status: "active", slug: packageSlug },
+  });
+
+  return res.status(200).json(packageDetails);
 };
 
 export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Response, next: NextFunction) => {

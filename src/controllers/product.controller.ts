@@ -8,6 +8,7 @@ import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
 import { generateSlug, paginatedResult, randomHash } from "../utils";
+import { uploadImage } from "../services/imagesService";
 
 const productRepository = MysqlDataSource.getRepository(Product);
 const productImageRepository = MysqlDataSource.getRepository(ProductImage);
@@ -168,28 +169,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     const newProduct = await productRepository.save(product);
 
     const images = req.files as Express.Multer.File[];
-    if (images.length) {
-      const imgOrder = JSON.parse(imagesOrder);
-      const folderPath = path.join(PRODUCT_IMG_FOLDER, newProduct.id.toString());
-
-      if (!fs.existsSync(folderPath)) {
-        fs.mkdirSync(folderPath);
-      }
-
-      images.forEach((image) => {
-        const imageHash = randomHash(6);
-        const imageName = `${imageHash}.${image.originalname.split(".").pop()}`;
-
-        fs.writeFileSync(path.join(folderPath, imageName), image.buffer);
-
-        const productImage = new ProductImage();
-        productImage.product = newProduct;
-        productImage.filename = imageName;
-        productImage.order = imgOrder[image.originalname];
-
-        productImageRepository.save(productImage);
-      });
-    }
+    await uploadProductImages(images, imagesOrder, product);
   } catch (err) {
     console.log(err);
     return res.status(400).json({ message: "Something went wrong!" });
@@ -251,28 +231,7 @@ export const updateProduct = async (
   await productRepository.save(product);
 
   const images = req.files as Express.Multer.File[];
-  if (images.length) {
-    const imgOrder = JSON.parse(imagesOrder);
-    const folderPath = path.join(PRODUCT_IMG_FOLDER, product.id.toString());
-
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath);
-    }
-
-    images.forEach((image) => {
-      const imageHash = randomHash(6);
-      const imageName = `${imageHash}.${image.originalname.split(".").pop()}`;
-
-      fs.writeFileSync(path.join(folderPath, imageName), image.buffer);
-
-      const productImage = new ProductImage();
-      productImage.product = product;
-      productImage.filename = imageName;
-      productImage.order = imgOrder[image.originalname];
-
-      productImageRepository.save(productImage);
-    });
-  }
+  await uploadProductImages(images, imagesOrder, product);
 
   return res.status(201).json({ message: "Product updated!" });
 };
@@ -310,4 +269,29 @@ export const deleteProductImage = async (req: Request, res: Response, next: Next
   });
 
   return res.status(204).json({ message: "Product image deleted" });
+};
+
+const uploadProductImages = async (images: Express.Multer.File[], imagesOrder: string, product: Product) => {
+  if (images && images.length) {
+    const imgOrder = JSON.parse(imagesOrder);
+    const folderPath = path.join(PRODUCT_IMG_FOLDER, product.id.toString());
+
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath);
+    }
+
+    for (const image of images) {
+      const imageHash = randomHash(6);
+      const imageName = `${imageHash}.${image.originalname.split(".").pop()}`;
+
+      await uploadImage(image.buffer, folderPath, imageName);
+
+      const productImage = new ProductImage();
+      productImage.product = product;
+      productImage.filename = imageName;
+      productImage.order = imgOrder[image.originalname];
+
+      productImageRepository.save(productImage);
+    }
+  }
 };

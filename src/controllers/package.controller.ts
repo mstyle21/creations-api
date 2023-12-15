@@ -11,6 +11,7 @@ import { PACKAGE_IMG_FOLDER } from "../config";
 import path from "path";
 import * as fs from "fs";
 import { PackageProduct } from "../entity/PackageProduct";
+import { uploadImage } from "../services/imagesService";
 
 const packageRepository = MysqlDataSource.getRepository(Package);
 const packageProductRepository = MysqlDataSource.getRepository(PackageProduct);
@@ -178,7 +179,7 @@ export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Resp
     const newPackage = await packageRepository.save(packageDetails);
 
     const images = req.files as Express.Multer.File[];
-    uploadPackageImages(images, imagesOrder, packageDetails);
+    await uploadPackageImages(images, imagesOrder, packageDetails);
   } catch (err) {
     console.log(err);
     return res.status(400).json({ message: "Something went wrong!" });
@@ -265,7 +266,7 @@ export const updatePackage = async (
   await packageRepository.save(packageDetails);
 
   const images = req.files as Express.Multer.File[];
-  uploadPackageImages(images, imagesOrder, packageDetails);
+  await uploadPackageImages(images, imagesOrder, packageDetails);
 
   return res.status(201).json({ message: "Package updated!" });
 };
@@ -305,7 +306,7 @@ export const deletePackageImage = async (req: Request, res: Response, next: Next
   return res.status(204).json({ message: "Package image deleted" });
 };
 
-const uploadPackageImages = (images: Express.Multer.File[], imagesOrder: string, packageDetails: Package) => {
+const uploadPackageImages = async (images: Express.Multer.File[], imagesOrder: string, packageDetails: Package) => {
   if (images && images.length) {
     const imgOrder = JSON.parse(imagesOrder);
     const folderPath = path.join(PACKAGE_IMG_FOLDER, packageDetails.id.toString());
@@ -314,11 +315,11 @@ const uploadPackageImages = (images: Express.Multer.File[], imagesOrder: string,
       fs.mkdirSync(folderPath);
     }
 
-    images.forEach((image) => {
+    for (const image of images) {
       const imageHash = randomHash(6);
       const imageName = `${imageHash}.${image.originalname.split(".").pop()}`;
 
-      fs.writeFileSync(path.join(folderPath, imageName), image.buffer);
+      await uploadImage(image.buffer, folderPath, imageName);
 
       const packageImage = new PackageImage();
       packageImage.package = packageDetails;
@@ -326,6 +327,6 @@ const uploadPackageImages = (images: Express.Multer.File[], imagesOrder: string,
       packageImage.order = imgOrder[image.originalname];
 
       packageImageRepository.save(packageImage);
-    });
+    }
   }
 };

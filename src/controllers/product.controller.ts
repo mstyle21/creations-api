@@ -3,7 +3,7 @@ import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Product } from "../entity/Product";
 import { ProductImage } from "../entity/ProductImage";
-import { FindOperator, FindOptionsOrder, In, Like, Not } from "typeorm";
+import { FindOperator, FindOptionsOrder, FindOptionsWhere, In, Like, Not } from "typeorm";
 import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
@@ -19,6 +19,7 @@ interface StatsQuery extends qs.ParsedQs {
   page?: string;
   perPage?: string;
   categories?: string[];
+  availability?: string;
   orderBy?: string;
 }
 
@@ -43,7 +44,7 @@ const sortByList: Record<string, object> = {
 };
 
 export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage, categories, orderBy } = req.query;
+  const { search, page, perPage, categories, availability, orderBy } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -55,11 +56,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   }
   const skip = limit * pag - limit;
 
-  const where: {
-    status: string;
-    name?: FindOperator<string>;
-    categories?: { id: FindOperator<number> };
-  } = {
+  const where: FindOptionsWhere<Product> = {
     status: "active",
   };
   if (search) {
@@ -82,6 +79,9 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   let order: FindOptionsOrder<Product> = { stock: "DESC", id: "DESC" };
   if (orderBy && sortByList[orderBy] !== undefined) {
     order = { ...order, ...sortByList[orderBy] };
+  }
+  if (availability && ["yes", "no"].includes(availability)) {
+    where.stock = availability === "yes" ? Not(0) : 0;
   }
 
   let products = await productRepository.find({

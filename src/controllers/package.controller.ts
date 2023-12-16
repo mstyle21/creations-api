@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { FindOperator, Like, In, FindOptionsOrder, Not } from "typeorm";
+import { FindOperator, Like, In, FindOptionsOrder, Not, FindOptionsWhere } from "typeorm";
 import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Package } from "../entity/Package";
@@ -24,6 +24,7 @@ interface StatsQuery extends qs.ParsedQs {
   page?: string;
   perPage?: string;
   categories?: string[];
+  availability?: string;
   orderBy?: string;
 }
 
@@ -46,7 +47,7 @@ const sortByList: Record<string, object> = {
 };
 
 export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage, categories, orderBy } = req.query;
+  const { search, page, perPage, categories, availability, orderBy } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -58,11 +59,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   }
   const skip = limit * pag - limit;
 
-  const where: {
-    status: string;
-    name?: FindOperator<string>;
-    category?: { id: FindOperator<number> };
-  } = {
+  const where: FindOptionsWhere<Package> = {
     status: "active",
   };
   if (search) {
@@ -85,6 +82,9 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   let order: FindOptionsOrder<Package> = { stock: "DESC", id: "DESC" };
   if (orderBy && sortByList[orderBy] !== undefined) {
     order = { ...order, ...sortByList[orderBy] };
+  }
+  if (availability && ["yes", "no"].includes(availability)) {
+    where.stock = availability === "yes" ? Not(0) : 0;
   }
 
   let packages = await packageRepository.find({

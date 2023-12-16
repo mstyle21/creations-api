@@ -25,12 +25,12 @@ interface StatsQuery extends qs.ParsedQs {
 
 interface ProductBody {
   name: string;
-  width: number;
-  height: number;
-  depth: number;
-  stock: number;
-  price: number;
-  oldPrice?: number;
+  width: string;
+  height: string;
+  depth: string;
+  stock: string;
+  price: string;
+  oldPrice?: string;
   status: string;
   categories: [];
   imagesOrder: string;
@@ -147,12 +147,12 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
   try {
     const product = new Product();
     product.name = name;
-    product.width = width;
-    product.height = width;
-    product.depth = width;
-    product.stock = stock;
-    product.price = price;
-    product.oldPrice = oldPrice ?? null;
+    product.width = parseFloat(width);
+    product.height = parseFloat(height);
+    product.depth = parseFloat(depth);
+    product.stock = parseInt(stock);
+    product.price = parseInt(price);
+    product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
     product.status = status;
 
     product.categories = await categoryRepository.findBy({ id: In(categories) });
@@ -200,12 +200,12 @@ export const updateProduct = async (
   }
 
   product.name = name;
-  product.width = width;
-  product.height = width;
-  product.depth = width;
-  product.stock = stock;
-  product.price = price;
-  product.oldPrice = oldPrice ?? null;
+  product.width = parseFloat(width);
+  product.height = parseFloat(height);
+  product.depth = parseFloat(depth);
+  product.stock = parseInt(stock);
+  product.price = parseInt(price);
+  product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
   product.status = status;
 
   product.categories = await categoryRepository.findBy({ id: In(categories) });

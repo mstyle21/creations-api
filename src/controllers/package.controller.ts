@@ -139,9 +139,9 @@ export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Resp
   try {
     const packageDetails = new Package();
     packageDetails.name = name;
-    packageDetails.stock = Number(stock);
-    packageDetails.price = Number(price);
-    packageDetails.oldPrice = oldPrice ? Number(oldPrice) : null;
+    packageDetails.stock = parseInt(stock);
+    packageDetails.price = parseInt(price);
+    packageDetails.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
     packageDetails.status = status;
 
     const packageCategory = await categoryRepository.findOneBy({ id: Number(category) });
@@ -211,9 +211,9 @@ export const updatePackage = async (
   }
 
   packageDetails.name = name;
-  packageDetails.stock = Number(stock);
-  packageDetails.price = Number(price);
-  packageDetails.oldPrice = oldPrice ? Number(oldPrice) : null;
+  packageDetails.stock = parseInt(stock);
+  packageDetails.price = parseInt(price);
+  packageDetails.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
   packageDetails.status = status;
 
   const packageCategory = await categoryRepository.findOneBy({ id: Number(category) });

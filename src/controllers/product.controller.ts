@@ -3,16 +3,18 @@ import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Product } from "../entity/Product";
 import { ProductImage } from "../entity/ProductImage";
-import { FindOperator, FindOptionsOrder, FindOptionsWhere, In, Like, Not } from "typeorm";
+import { FindManyOptions, FindOperator, FindOptionsOrder, FindOptionsWhere, In, Like, Not } from "typeorm";
 import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
 import { generateSlug, paginatedResult, randomHash } from "../utils";
 import { uploadImage } from "../services/imagesService";
+import { Package } from "../entity/Package";
 
 const productRepository = MysqlDataSource.getRepository(Product);
 const productImageRepository = MysqlDataSource.getRepository(ProductImage);
 const categoryRepository = MysqlDataSource.getRepository(Category);
+const packageRepository = MysqlDataSource.getRepository(Package);
 
 interface StatsQuery extends qs.ParsedQs {
   search?: string;
@@ -103,19 +105,112 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   return res.status(200).json(paginatedResult(products, countFilteredProducts.length, limit));
 };
 
-export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
-  let products = await productRepository.find({ relations: { images: true } });
+export const getProductsAndPackages = async (
+  req: Request<{}, {}, {}, StatsQuery>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { search, page, perPage, categories, availability, orderBy } = req.query;
 
-  return res.status(200).json(products);
+  let pag = 1;
+  let limit = 10;
+  if (perPage && !isNaN(parseInt(perPage)) && parseInt(perPage) > 0) {
+    limit = parseInt(perPage);
+  }
+  if (page && !isNaN(parseInt(page)) && parseInt(page) > 0) {
+    pag = parseInt(page);
+  }
+  const skip = limit * pag - limit;
+
+  const productWhere: FindOptionsWhere<Product> = {
+    status: "active",
+  };
+  const packageWhere: FindOptionsWhere<Package> = {
+    status: "active",
+  };
+  if (search) {
+    productWhere.name = Like(`%${search}%`);
+    packageWhere.name = Like(`$${search}%`);
+  }
+  if (categories && Array.isArray(categories)) {
+    const initial: number[] = [];
+    const parsedArray = categories.reduce((result, category) => {
+      const checkInt = parseInt(category.toString());
+      if (!isNaN(checkInt)) {
+        result.push(checkInt);
+      }
+
+      return result;
+    }, initial);
+
+    productWhere.categories = {
+      id: In(parsedArray),
+    };
+    packageWhere.category = { id: In(parsedArray) };
+  }
+  let order = "recent";
+  if (orderBy && sortByList[orderBy] !== undefined) {
+    order = orderBy;
+  }
+  if (availability && ["yes", "no"].includes(availability)) {
+    productWhere.stock = availability === "yes" ? Not(0) : 0;
+    packageWhere.stock = availability === "yes" ? Not(0) : 0;
+  }
+
+  let products = await productRepository.find({
+    where: productWhere,
+    relations: {
+      categories: true,
+      images: true,
+    },
+    cache: true,
+  });
+  products = products.map((product) => {
+    return { ...product, type: "product", images: product.images.sort((a, b) => a.order - b.order) };
+  });
+
+  let packages = await packageRepository.find({
+    where: packageWhere,
+    relations: {
+      category: true,
+      images: true,
+    },
+    cache: true,
+  });
+  packages = packages.map((packageDetails) => {
+    return { ...packageDetails, type: "package", images: packageDetails.images.sort((a, b) => a.order - b.order) };
+  });
+
+  const items = mergeProductsAndPackages(products, packages, order, skip, limit);
+
+  return res.status(200).json(items);
 };
 
-export const getLatestProducts = async (req: Request, res: Response, next: NextFunction) => {
-  let products = await productRepository.find({
+export const getLatestProductsAndPackages = async (req: Request, res: Response, next: NextFunction) => {
+  const config: FindManyOptions = {
     relations: { images: true },
     where: { status: "active" },
     order: { id: "DESC" },
     take: 8,
+  };
+
+  let products = await productRepository.find(config);
+  let packages = await packageRepository.find(config);
+
+  products = products.map((productDetails) => {
+    return { ...productDetails, type: "product" };
   });
+  packages = packages.map((packageDetails) => {
+    return { ...packageDetails, type: "package" };
+  });
+
+  const items = mergeLatestProductsAndPackages(products, packages);
+
+  return res.status(200).json(items);
+};
+
+export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+  let products = await productRepository.find({ relations: { images: true } });
 
   return res.status(200).json(products);
 };
@@ -294,4 +389,43 @@ const uploadProductImages = async (images: Express.Multer.File[], imagesOrder: s
       productImageRepository.save(productImage);
     }
   }
+};
+
+const mergeLatestProductsAndPackages = (products: Product[], packages: Package[]) => {
+  return [...products, ...packages]
+    .sort((a, b) => {
+      return new Date(b.created).getTime() - new Date(a.created).getTime();
+    })
+    .reduce((items: (Package | Product)[], currentItem) => {
+      if (items.length < 8) {
+        items.push(currentItem);
+      }
+      return items;
+    }, []);
+};
+
+const mergeProductsAndPackages = (products: Product[], packages: Package[], order: {}, skip: number, limit: number) => {
+  const mergedItems = [...products, ...packages]
+    .sort((a, b) => {
+      switch (order) {
+        default:
+        case "recent":
+          //created DESC
+          return new Date(b.created).getTime() - new Date(a.created).getTime();
+        case "name":
+          //name ASC
+          return a.name.localeCompare(b.name);
+        case "priceAsc":
+          return a.price - b.price;
+        case "priceDesc":
+          return b.price - a.price;
+      }
+    })
+    .filter((item, index) => {
+      if (index >= skip && index < skip + limit) {
+        return item;
+      }
+    });
+
+  return paginatedResult(mergedItems, products.length + packages.length, limit);
 };

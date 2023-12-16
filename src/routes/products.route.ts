@@ -5,10 +5,11 @@ import {
   createProduct,
   deleteProductImage,
   getAllProducts,
-  getLatestProducts,
+  getLatestProductsAndPackages,
   getProductDetailsBySlug,
   getProductStats,
   getProducts,
+  getProductsAndPackages,
   updateProduct,
 } from "../controllers/product.controller";
 
@@ -24,14 +25,11 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 };
 const upload = multer({ storage: storage, fileFilter: filter });
 
-router.get("/", getProducts);
-
+router.get("/", verifyToken, getProducts);
+router.get("/figurine", getProductsAndPackages);
+router.get("/latest", getLatestProductsAndPackages);
 router.get("/all", verifyToken, getAllProducts);
-
-router.get("/latest", getLatestProducts);
-
 router.get("/stats", verifyToken, getProductStats);
-
 router.get("/:productSlug", getProductDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), createProduct);

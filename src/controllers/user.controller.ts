@@ -3,7 +3,7 @@ import MysqlDataSource from "../config/data-source";
 import { User } from "../entity/User";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { validationResult } from "express-validator";
 
 dotenv.config();
@@ -36,18 +36,20 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
   });
 
   if (user && (await bcrypt.compare(password, user.password))) {
-    const payload: JWTPayloadData = {
-      time: Date(),
-      userId: user.id,
-      email: user.email,
-      role: user.role.name,
-    };
-    const token = jwt.sign(payload, jwtSecretKey, {
-      expiresIn: "1h",
-    });
+    let token;
+    
+    if (user.token) {
+      token = user.token;
 
-    user.token = token;
-    MysqlDataSource.manager.save(user);
+      const payloadCheck = jwt.verify(user.token, jwtSecretKey) as JwtPayload;
+      const nowUnixSeconds = Math.round(Number(new Date()) / 1000);
+
+      if (!payloadCheck.exp || payloadCheck.exp < nowUnixSeconds) {
+        token = createUserToken(user)
+      }
+    } else {
+      token = createUserToken(user)
+    }
 
     return res.json({
       email: user.email,
@@ -56,6 +58,23 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
   }
 
   return res.status(400).json({ message: "Invalid credentials!" });
+};
+
+const createUserToken = (user: User) => {
+  const payload: JWTPayloadData = {
+    time: Date(),
+    userId: user.id,
+    email: user.email,
+    role: user.role.name,
+  };
+  const token = jwt.sign(payload, jwtSecretKey, {
+    expiresIn: "1h",
+  });
+
+  user.token = token;
+  MysqlDataSource.manager.save(user);
+
+  return token;
 };
 
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {};

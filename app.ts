@@ -52,14 +52,11 @@ app.use(bodyParser.json());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(
-  process.env.APP_ENV === "local" ? '/' : '/api/',
-  express.static("uploads")
-);
-
 /**
  * Server Activation
  */
+app.use('/api/', express.static("uploads"));
+
 app.use("/api/user", userRouter);
 
 app.use("/api/categories", categoryRouter);

@@ -3,7 +3,7 @@ import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Product } from "../entity/Product";
 import { ProductImage } from "../entity/ProductImage";
-import { FindManyOptions, FindOperator, FindOptionsOrder, FindOptionsWhere, In, Like, Not } from "typeorm";
+import { FindManyOptions, FindOptionsOrder, FindOptionsWhere, In, Like, Not } from "typeorm";
 import path from "path";
 import * as fs from "fs";
 import { PRODUCT_IMG_FOLDER } from "../config";
@@ -22,6 +22,7 @@ interface StatsQuery extends qs.ParsedQs {
   perPage?: string;
   categories?: string[];
   availability?: string;
+  type?: string;
   orderBy?: string;
 }
 
@@ -110,7 +111,7 @@ export const getProductsAndPackages = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { search, page, perPage, categories, availability, orderBy } = req.query;
+  const { search, page, perPage, categories, availability, type, orderBy } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -128,10 +129,12 @@ export const getProductsAndPackages = async (
   const packageWhere: FindOptionsWhere<Package> = {
     status: "active",
   };
+
   if (search) {
     productWhere.name = Like(`%${search}%`);
     packageWhere.name = Like(`$${search}%`);
   }
+
   if (categories && Array.isArray(categories)) {
     const initial: number[] = [];
     const parsedArray = categories.reduce((result, category) => {
@@ -148,35 +151,47 @@ export const getProductsAndPackages = async (
     };
     packageWhere.category = { id: In(parsedArray) };
   }
+
   let order = "recent";
   if (orderBy && sortByList[orderBy] !== undefined) {
     order = orderBy;
   }
+
   if (availability && ["yes", "no"].includes(availability)) {
     productWhere.stock = availability === "yes" ? Not(0) : 0;
     packageWhere.stock = availability === "yes" ? Not(0) : 0;
   }
 
-  let products = await productRepository.find({
+  let includeProducts = true;
+  let includePackages = true;
+  if (type && ["product", "package"].includes(type)) {
+    if (type === 'product') {
+      includePackages = false;
+    } else {
+      includeProducts = false;
+    }
+  }
+
+  let products = includeProducts ? await productRepository.find({
     where: productWhere,
     relations: {
       categories: true,
       images: true,
     },
     cache: true,
-  });
+  }) : [];
   products = products.map((product) => {
     return { ...product, type: "product", images: product.images.sort((a, b) => a.order - b.order) };
   });
 
-  let packages = await packageRepository.find({
+  let packages = includePackages ? await packageRepository.find({
     where: packageWhere,
     relations: {
       category: true,
       images: true,
     },
     cache: true,
-  });
+  }) : [];
   packages = packages.map((packageDetails) => {
     return { ...packageDetails, type: "package", images: packageDetails.images.sort((a, b) => a.order - b.order) };
   });

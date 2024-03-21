@@ -11,7 +11,7 @@ const MysqlDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   synchronize: process.env.APP_ENV === "local" ? true : false,
-  logging: true,
+  logging: process.env.APP_ENV === "local" ? true : false,
   entities: [__dirname + "/../entity/*.{ts,js}"],
   migrations: [__dirname + "/../migrations/*.{ts,js}"],
   subscribers: [],

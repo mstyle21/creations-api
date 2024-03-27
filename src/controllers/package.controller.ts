@@ -59,9 +59,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   }
   const skip = limit * pag - limit;
 
-  const where: FindOptionsWhere<Package> = {
-    status: "active",
-  };
+  const where: FindOptionsWhere<Package> = {};
   if (search) {
     where.name = Like(`%${search}%`);
   }
@@ -188,11 +186,7 @@ export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Resp
   return res.status(201).json({ message: "Package created!" });
 };
 
-export const updatePackage = async (
-  req: Request<{ packageId: string }, {}, PackageBody>,
-  res: Response,
-  next: NextFunction
-) => {
+export const updatePackage = async (req: Request<{ packageId: string }, {}, PackageBody>, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });

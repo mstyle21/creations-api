@@ -60,9 +60,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   }
   const skip = limit * pag - limit;
 
-  const where: FindOptionsWhere<Product> = {
-    status: "active",
-  };
+  const where: FindOptionsWhere<Product> = {};
   if (search) {
     where.name = Like(`%${search}%`);
   }

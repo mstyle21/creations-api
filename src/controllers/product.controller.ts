@@ -10,6 +10,7 @@ import { PRODUCT_IMG_FOLDER } from "../config";
 import { generateSlug, paginatedResult, randomHash } from "../utils";
 import { uploadImage } from "../services/imagesService";
 import { Package } from "../entity/Package";
+import { validationResult } from "express-validator";
 
 const productRepository = MysqlDataSource.getRepository(Product);
 const productImageRepository = MysqlDataSource.getRepository(ProductImage);
@@ -106,11 +107,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   return res.status(200).json(paginatedResult(products, countFilteredProducts.length, limit));
 };
 
-export const getProductsAndPackages = async (
-  req: Request<{}, {}, {}, StatsQuery>,
-  res: Response,
-  next: NextFunction
-) => {
+export const getProductsAndPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
   const { search, page, perPage, categories, availability, type, orderBy } = req.query;
 
   let pag = 1;
@@ -165,33 +162,37 @@ export const getProductsAndPackages = async (
   let includeProducts = true;
   let includePackages = true;
   if (type && ["product", "package"].includes(type)) {
-    if (type === 'product') {
+    if (type === "product") {
       includePackages = false;
     } else {
       includeProducts = false;
     }
   }
 
-  let products = includeProducts ? await productRepository.find({
-    where: productWhere,
-    relations: {
-      categories: true,
-      images: true,
-    },
-    cache: true,
-  }) : [];
+  let products = includeProducts
+    ? await productRepository.find({
+        where: productWhere,
+        relations: {
+          categories: true,
+          images: true,
+        },
+        cache: true,
+      })
+    : [];
   products = products.map((product) => {
     return { ...product, type: "product", images: product.images.sort((a, b) => a.order - b.order) };
   });
 
-  let packages = includePackages ? await packageRepository.find({
-    where: packageWhere,
-    relations: {
-      category: true,
-      images: true,
-    },
-    cache: true,
-  }) : [];
+  let packages = includePackages
+    ? await packageRepository.find({
+        where: packageWhere,
+        relations: {
+          category: true,
+          images: true,
+        },
+        cache: true,
+      })
+    : [];
   packages = packages.map((packageDetails) => {
     return { ...packageDetails, type: "package", images: packageDetails.images.sort((a, b) => a.order - b.order) };
   });
@@ -248,10 +249,15 @@ export const getProductStats = async (req: Request, res: Response, next: NextFun
 };
 
 export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array() });
+  }
+
   const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
 
   if (!name || !width || !height || !depth || !stock || !price || !status || !categories) {
-    return res.status(400).json({ message: "Invalid request!" });
+    return res.status(400).json({ error: "Invalid request!" });
   }
 
   try {
@@ -282,22 +288,18 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     await uploadProductImages(images, imagesOrder, product);
   } catch (err) {
     console.log(err);
-    return res.status(400).json({ message: "Something went wrong!" });
+    return res.status(400).json({ error: "Something went wrong!" });
   }
 
   return res.status(201).json({ message: "Product created!" });
 };
 
-export const updateProduct = async (
-  req: Request<{ productId: string }, {}, ProductBody>,
-  res: Response,
-  next: NextFunction
-) => {
+export const updateProduct = async (req: Request<{ productId: string }, {}, ProductBody>, res: Response, next: NextFunction) => {
   const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
   const productId = req.params.productId;
 
   if (!productId || !name || !width || !height || !depth || !stock || !price || !status) {
-    return res.status(400).json({ message: "Invalid request!" });
+    return res.status(400).json({ error: "Invalid request!" });
   }
 
   const product = await productRepository.findOne({
@@ -306,7 +308,7 @@ export const updateProduct = async (
   });
 
   if (!product) {
-    return res.status(400).json({ message: "Something went wrong. Product not found!" });
+    return res.status(400).json({ error: "Something went wrong. Product not found!" });
   }
 
   product.name = name;
@@ -360,7 +362,7 @@ export const deleteProductImage = async (req: Request, res: Response, next: Next
   });
 
   if (!productImage || productImage.product.id.toString() !== productId) {
-    return res.status(400).json({ message: "Invalid request!" });
+    return res.status(400).json({ error: "Invalid request!" });
   }
 
   const folderPath = path.join(PRODUCT_IMG_FOLDER, productImage.product.id.toString());

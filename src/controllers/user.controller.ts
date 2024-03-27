@@ -37,18 +37,22 @@ export const userLogin = async (req: Request, res: Response, next: NextFunction)
 
   if (user && (await bcrypt.compare(password, user.password))) {
     let token;
-    
+
     if (user.token) {
       token = user.token;
 
-      const payloadCheck = jwt.verify(user.token, jwtSecretKey) as JwtPayload;
-      const nowUnixSeconds = Math.round(Number(new Date()) / 1000);
+      try {
+        const payloadCheck = jwt.verify(token, jwtSecretKey) as JwtPayload;
+        const nowUnixSeconds = Math.round(Number(new Date()) / 1000);
 
-      if (!payloadCheck.exp || payloadCheck.exp < nowUnixSeconds) {
-        token = createUserToken(user)
+        if (!payloadCheck.exp || payloadCheck.exp < nowUnixSeconds) {
+          token = createUserToken(user);
+        }
+      } catch (err) {
+        token = createUserToken(user);
       }
     } else {
-      token = createUserToken(user)
+      token = createUserToken(user);
     }
 
     return res.json({
@@ -78,3 +82,9 @@ const createUserToken = (user: User) => {
 };
 
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {};
+
+export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+  return res.json({
+    token: createUserToken(res.locals.loggedUser),
+  });
+};

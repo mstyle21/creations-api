@@ -12,6 +12,7 @@ import {
   getProductsAndPackages,
   updateProduct,
 } from "../controllers/product.controller";
+import { productValidation } from "../validations/product.validation";
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ router.get("/all", verifyToken, getAllProducts);
 router.get("/stats", verifyToken, getProductStats);
 router.get("/:productSlug", getProductDetailsBySlug);
 
-router.post("/", verifyToken, upload.array("images"), createProduct);
+router.post("/", verifyToken, upload.array("images"), productValidation(), createProduct);
 
 router.put("/:productId", verifyToken, upload.array("images"), updateProduct);
 

@@ -22,7 +22,7 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 };
 const upload = multer({ storage: storage, fileFilter: filter });
 
-router.get("/", getPackages);
+router.get("/", verifyToken, getPackages);
 router.get("/stats", verifyToken, getPackageStats);
 router.get("/:packageSlug", getPackageDetailsBySlug);
 

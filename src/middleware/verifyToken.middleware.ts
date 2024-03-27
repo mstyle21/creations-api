@@ -29,7 +29,6 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   let payload;
   try {
     payload = jwt.verify(token, jwtSecretKey) as JwtPayload;
-    console.log(payload);
     const nowUnixSeconds = Math.round(Number(new Date()) / 1000);
     if (!payload.exp || payload.exp < nowUnixSeconds) {
       return res.status(401).json({ error: INVALID_TOKEN_MSG });

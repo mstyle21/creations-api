@@ -25,6 +25,8 @@ interface StatsQuery extends qs.ParsedQs {
   availability?: string;
   type?: string;
   orderBy?: string;
+  sortBy?: string;
+  order?: string;
 }
 
 interface ProductBody {
@@ -47,8 +49,9 @@ const sortByList: Record<string, object> = {
   priceDesc: { price: "DESC" },
 };
 
+const sortableBy = ["id", "name", "stock", "price"];
 export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage, categories, availability, orderBy } = req.query;
+  const { search, page, perPage, categories, availability, sortBy, order } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -78,10 +81,12 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       id: In(parsedArray),
     };
   }
-  let order: FindOptionsOrder<Product> = { stock: "DESC", id: "DESC" };
-  if (orderBy && sortByList[orderBy] !== undefined) {
-    order = { ...order, ...sortByList[orderBy] };
+
+  let orderQ: FindOptionsOrder<Product> = { id: "DESC" };
+  if (sortBy && order && sortableBy.includes(sortBy) && ["asc", "desc"].includes(order)) {
+    orderQ = { [sortBy]: order };
   }
+
   if (availability && ["yes", "no"].includes(availability)) {
     where.stock = availability === "yes" ? Not(0) : 0;
   }
@@ -92,7 +97,7 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       categories: true,
       images: true,
     },
-    order: order,
+    order: orderQ,
     take: limit,
     skip: skip,
   });

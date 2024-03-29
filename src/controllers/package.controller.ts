@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { FindOperator, Like, In, FindOptionsOrder, Not, FindOptionsWhere } from "typeorm";
+import { Like, In, FindOptionsOrder, Not, FindOptionsWhere } from "typeorm";
 import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { Package } from "../entity/Package";
@@ -26,6 +26,8 @@ interface StatsQuery extends qs.ParsedQs {
   categories?: string[];
   availability?: string;
   orderBy?: string;
+  sortBy?: string;
+  order?: string;
 }
 
 interface PackageBody {
@@ -46,8 +48,9 @@ const sortByList: Record<string, object> = {
   priceDesc: { price: "DESC" },
 };
 
+const sortableBy = ["id", "name", "stock", "price"];
 export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage, categories, availability, orderBy } = req.query;
+  const { search, page, perPage, categories, availability, sortBy, order } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -77,10 +80,12 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       id: In(parsedArray),
     };
   }
-  let order: FindOptionsOrder<Package> = { stock: "DESC", id: "DESC" };
-  if (orderBy && sortByList[orderBy] !== undefined) {
-    order = { ...order, ...sortByList[orderBy] };
+
+  let orderQ: FindOptionsOrder<Product> = { id: "DESC" };
+  if (sortBy && order && sortableBy.includes(sortBy) && ["asc", "desc"].includes(order)) {
+    orderQ = { [sortBy]: order };
   }
+
   if (availability && ["yes", "no"].includes(availability)) {
     where.stock = availability === "yes" ? Not(0) : 0;
   }
@@ -96,7 +101,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
       },
       images: true,
     },
-    order: order,
+    order: orderQ,
     take: limit,
     skip: skip,
   });

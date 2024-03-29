@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import MysqlDataSource from "../config/data-source";
 import { Category } from "../entity/Category";
 import { validationResult } from "express-validator";
-import { FindOperator, Like } from "typeorm";
-import { paginatedResult, sleep } from "../utils";
+import { FindOperator, FindOptionsOrder, Like } from "typeorm";
+import { paginatedResult } from "../utils";
 import { PaginationQuery } from "../types";
 
 const categoryRepository = MysqlDataSource.getRepository(Category);
@@ -16,9 +16,13 @@ export const getAllCategories = async (req: Request, res: Response, next: NextFu
 
 interface StatsQuery extends PaginationQuery {
   search?: string;
+  sortBy?: string;
+  order?: string;
 }
+
+const sortableBy = ["id", "name"];
 export const getCategories = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
-  const { search, page, perPage } = req.query;
+  const { search, page, perPage, sortBy, order } = req.query;
 
   let pag = 1;
   let limit = 10;
@@ -37,16 +41,31 @@ export const getCategories = async (req: Request<{}, {}, {}, StatsQuery>, res: R
     where.name = Like(`%${search}%`);
   }
 
+  let orderQ: FindOptionsOrder<Category> = { id: "DESC" };
+  if (sortBy && order && sortableBy.includes(sortBy) && ["asc", "desc"].includes(order)) {
+    orderQ = { [sortBy]: order };
+  }
+
   const categories = await categoryRepository.find({
     where: where,
     relations: {
       products: true,
       packages: true,
     },
-    order: { status: "ASC", id: "DESC" },
+    order: orderQ,
     take: limit,
     skip: skip,
   });
+
+  if (sortBy && order && ["packages", "products"].includes(sortBy) && ["asc", "desc"].includes(order)) {
+    categories.sort((a, b) => {
+      let aItem = sortBy === "packages" ? a.packages : a.products;
+      let bItem = sortBy === "packages" ? b.packages : b.products;
+
+      return order === "asc" ? aItem.length - bItem.length : bItem.length - aItem.length;
+    });
+  }
+
   const countFilteredCategories = await categoryRepository.find({ where });
 
   return res.status(200).json(paginatedResult(categories, countFilteredCategories.length, limit));

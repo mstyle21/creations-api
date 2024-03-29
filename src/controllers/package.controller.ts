@@ -121,7 +121,7 @@ export const getPackageDetailsBySlug = async (req: Request, res: Response, next:
 };
 
 export const getPackageStats = async (req: Request, res: Response, next: NextFunction) => {
-  let packages = await packageRepository.find({ where: { status: "active" } });
+  let packages = await packageRepository.find();
 
   return res.status(200).json(packages);
 };

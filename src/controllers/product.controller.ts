@@ -246,7 +246,7 @@ export const getProductDetailsBySlug = async (req: Request, res: Response, next:
 };
 
 export const getProductStats = async (req: Request, res: Response, next: NextFunction) => {
-  let products = await productRepository.find({ where: { status: "active" } });
+  let products = await productRepository.find();
 
   return res.status(200).json(products);
 };

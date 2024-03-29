@@ -11,7 +11,7 @@ export const productValidation = () => {
     body("price").notEmpty().bail().withMessage("Price is required.").isDecimal().withMessage("Invalid price, must be a valid number."),
     body("oldPrice").optional({ values: "falsy" }).isDecimal().withMessage("Invalid old price, must be a valid number."),
     body("status").isIn(["active", "inactive"]).withMessage("Invalid status provided."),
-    body("categories").toArray().isArray({ min: 1 }).notEmpty().withMessage("Select at least one category."),
+    body("categories").toArray().isArray({ min: 1 }).withMessage("Select at least one category."),
     body("imagesOrder"),
     body("images"),
   ];

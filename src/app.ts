@@ -8,12 +8,13 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import bodyParser from "body-parser";
+import path, { dirname } from "path";
 
-import userRouter from "./src/routes/user.route";
-import categoryRouter from "./src/routes/categories.route";
-import productRouter from "./src/routes/products.route";
-import packageRouter from "./src/routes/packages.route";
-import orderRouter from "./src/routes/orders.route";
+import userRouter from "./routes/user.route";
+import categoryRouter from "./routes/categories.route";
+import productRouter from "./routes/products.route";
+import packageRouter from "./routes/packages.route";
+import orderRouter from "./routes/orders.route";
 
 /**
  * App Variables
@@ -21,9 +22,7 @@ import orderRouter from "./src/routes/orders.route";
 dotenv.config();
 
 if (!process.env.APP_PORT || !process.env.APP_URL) {
-  console.error(
-    "Missing config items: APP_PORT or APP_URL. Please check .env file!"
-  );
+  console.error("Missing config items: APP_PORT or APP_URL. Please check .env file!");
   process.exit(1);
 }
 
@@ -31,6 +30,7 @@ const URL: string = process.env.APP_URL as string;
 const PORT: number = parseInt(process.env.APP_PORT as string, 10);
 
 const app = express();
+export const APP_ROOT_PATH = dirname(__filename);
 
 /**
  *  App Configuration
@@ -55,7 +55,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 /**
  * Server Activation
  */
-app.use('/api/', express.static("uploads"));
+app.use("/api/", express.static("uploads"));
 
 app.use("/api/user", userRouter);
 

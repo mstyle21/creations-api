@@ -35,10 +35,11 @@ interface ProductBody {
   height: string;
   depth: string;
   stock: string;
+  materialWeight: string;
   price: string;
   oldPrice?: string;
   status: string;
-  categories: [];
+  categories: number[];
   imagesOrder: string;
 }
 
@@ -257,11 +258,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     return res.status(400).json({ error: errors.array() });
   }
 
-  const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
-
-  if (!name || !width || !height || !depth || !stock || !price || !status || !categories) {
-    return res.status(400).json({ error: "Invalid request!" });
-  }
+  const { name, width, height, depth, stock, materialWeight, price, oldPrice, status, categories, imagesOrder } = req.body;
 
   try {
     const product = new Product();
@@ -270,6 +267,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     product.height = parseFloat(height);
     product.depth = parseFloat(depth);
     product.stock = parseInt(stock);
+    product.materialWeight = materialWeight && materialWeight !== "" ? parseInt(materialWeight) : null;
     product.price = parseInt(price);
     product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
     product.status = status;
@@ -298,12 +296,14 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
 };
 
 export const updateProduct = async (req: Request<{ productId: string }, {}, ProductBody>, res: Response, next: NextFunction) => {
-  const { name, width, height, depth, stock, price, oldPrice, status, categories, imagesOrder } = req.body;
-  const productId = req.params.productId;
-
-  if (!productId || !name || !width || !height || !depth || !stock || !price || !status) {
-    return res.status(400).json({ error: "Invalid request!" });
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array() });
   }
+
+  const { name, width, height, depth, stock, materialWeight, price, oldPrice, status, categories, imagesOrder } = req.body;
+
+  const productId = req.params.productId;
 
   const product = await productRepository.findOne({
     where: { id: parseInt(productId) },
@@ -319,6 +319,7 @@ export const updateProduct = async (req: Request<{ productId: string }, {}, Prod
   product.height = parseFloat(height);
   product.depth = parseFloat(depth);
   product.stock = parseInt(stock);
+  product.materialWeight = materialWeight && materialWeight !== "" ? parseInt(materialWeight) : null;
   product.price = parseInt(price);
   product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
   product.status = status;

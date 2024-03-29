@@ -27,7 +27,7 @@ export class Product {
   @Column()
   slug: string;
   @Column({ type: "smallint", default: null })
-  materialWeight: number;
+  materialWeight: number | null;
   @ManyToMany(() => Category, (category) => category.products)
   @JoinTable()
   categories: Category[];

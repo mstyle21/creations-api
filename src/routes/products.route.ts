@@ -35,7 +35,7 @@ router.get("/:productSlug", getProductDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), productValidation(), createProduct);
 
-router.put("/:productId", verifyToken, upload.array("images"), updateProduct);
+router.put("/:productId", verifyToken, upload.array("images"), productValidation(), updateProduct);
 
 router.delete("/:productId/image/:imageId", verifyToken, deleteProductImage);
 

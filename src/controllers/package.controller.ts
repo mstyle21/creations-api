@@ -155,8 +155,16 @@ export const createPackage = async (req: Request<{}, {}, PackageBody>, res: Resp
 
     let slug = generateSlug(name);
     let counter = 1;
+    let counterUsed = false;
+
     while ((await packageRepository.findBy({ slug: slug })).length) {
-      slug += `-${counter}`;
+      if (counterUsed) {
+        slug = slug.replace(`-${counter - 1}`, `-${counter}`);
+      } else {
+        slug += `-${counter}`;
+      }
+
+      counterUsed = true;
       counter++;
     }
 
@@ -223,10 +231,19 @@ export const updatePackage = async (req: Request<{ packageId: string }, {}, Pack
 
   let slug = generateSlug(name);
   let counter = 1;
+  let counterUsed = false;
+
   while ((await packageRepository.findBy({ slug: slug, id: Not(packageDetails.id) })).length) {
-    slug += `-${counter}`;
+    if (counterUsed) {
+      slug = slug.replace(`-${counter - 1}`, `-${counter}`);
+    } else {
+      slug += `-${counter}`;
+    }
+
+    counterUsed = true;
     counter++;
   }
+
   packageDetails.slug = slug;
 
   const updatedPackageProducts: { productId: number; name: string; quantity: number }[] = JSON.parse(products);

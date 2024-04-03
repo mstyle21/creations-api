@@ -276,8 +276,16 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
 
     let slug = generateSlug(name);
     let counter = 1;
+    let counterUsed = false;
+
     while ((await productRepository.findBy({ slug: slug })).length) {
-      slug += `-${counter}`;
+      if (counterUsed) {
+        slug = slug.replace(`-${counter - 1}`, `-${counter}`);
+      } else {
+        slug += `-${counter}`;
+      }
+
+      counterUsed = true;
       counter++;
     }
 
@@ -337,8 +345,16 @@ export const updateProduct = async (req: Request<{ productId: string }, {}, Prod
 
   let slug = generateSlug(name);
   let counter = 1;
+  let counterUsed = false;
+
   while ((await productRepository.findBy({ slug: slug, id: Not(product.id) })).length) {
-    slug += `-${counter}`;
+    if (counterUsed) {
+      slug = slug.replace(`-${counter - 1}`, `-${counter}`);
+    } else {
+      slug += `-${counter}`;
+    }
+
+    counterUsed = true;
     counter++;
   }
 

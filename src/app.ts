@@ -8,7 +8,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import bodyParser from "body-parser";
-import path, { dirname } from "path";
 
 import userRouter from "./routes/user.route";
 import categoryRouter from "./routes/categories.route";
@@ -30,7 +29,6 @@ const URL: string = process.env.APP_URL as string;
 const PORT: number = parseInt(process.env.APP_PORT as string, 10);
 
 const app = express();
-export const APP_ROOT_PATH = dirname(__filename);
 
 /**
  *  App Configuration

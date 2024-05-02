@@ -26,17 +26,20 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 };
 const upload = multer({ storage: storage, fileFilter: filter });
 
+//admin
 router.get("/", verifyToken, getProducts);
-router.get("/figurine", getProductsAndPackages);
-router.get("/latest", getLatestProductsAndPackages);
 router.get("/all", verifyToken, getAllProducts);
 router.get("/stats", verifyToken, getProductStats);
-router.get("/:productSlug", getProductDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), productValidation(), createProduct);
 
 router.put("/:productId", verifyToken, upload.array("images"), productValidation(), updateProduct);
 
 router.delete("/:productId/image/:imageId", verifyToken, deleteProductImage);
+
+//frontend
+router.get("/figurine", getProductsAndPackages);
+router.get("/latest", getLatestProductsAndPackages);
+router.get("/:productSlug", getProductDetailsBySlug);
 
 export default router;

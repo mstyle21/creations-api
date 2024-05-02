@@ -5,8 +5,11 @@ import { orderValidation } from "../validations/order.validation";
 
 const router = express.Router();
 
+//admin
 router.get("/", verifyToken, getOrders);
 
 router.post("/", verifyToken, orderValidation(), createOrder);
+
+//frontend
 
 export default router;

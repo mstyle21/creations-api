@@ -54,7 +54,7 @@ export const getPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
 
   let pag = 1;
   let limit = 10;
-  if (perPage && !isNaN(parseInt(perPage)) && parseInt(perPage) > 0) {
+  if (perPage && !isNaN(parseInt(perPage)) && parseInt(perPage) > 0 && parseInt(perPage) <= 50) {
     limit = parseInt(perPage);
   }
   if (page && !isNaN(parseInt(page)) && parseInt(page) > 0) {

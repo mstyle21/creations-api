@@ -116,7 +116,7 @@ export const getProductsAndPackages = async (req: Request<{}, {}, {}, StatsQuery
 
   let pag = 1;
   let limit = 10;
-  if (perPage && !isNaN(parseInt(perPage)) && parseInt(perPage) > 0) {
+  if (perPage && !isNaN(parseInt(perPage)) && parseInt(perPage) > 0 && parseInt(perPage) <= 50) {
     limit = parseInt(perPage);
   }
   if (page && !isNaN(parseInt(page)) && parseInt(page) > 0) {
@@ -230,7 +230,7 @@ export const getLatestProductsAndPackages = async (req: Request, res: Response, 
 };
 
 export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
-  let products = await productRepository.find({ relations: { images: true } });
+  const products = await productRepository.find({ relations: { images: true } });
 
   return res.status(200).json(products);
 };
@@ -238,7 +238,7 @@ export const getAllProducts = async (req: Request, res: Response, next: NextFunc
 export const getProductDetailsBySlug = async (req: Request, res: Response, next: NextFunction) => {
   const productSlug = req.params.productSlug;
 
-  let product = await productRepository.findOne({
+  const product = await productRepository.findOne({
     relations: { images: true, categories: true },
     where: { status: "active", slug: productSlug },
   });
@@ -247,7 +247,7 @@ export const getProductDetailsBySlug = async (req: Request, res: Response, next:
 };
 
 export const getProductStats = async (req: Request, res: Response, next: NextFunction) => {
-  let products = await productRepository.find();
+  const products = await productRepository.find();
 
   return res.status(200).json(products);
 };

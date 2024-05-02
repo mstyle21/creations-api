@@ -22,14 +22,17 @@ const filter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCa
 };
 const upload = multer({ storage: storage, fileFilter: filter });
 
+//admin
 router.get("/", verifyToken, getPackages);
 router.get("/stats", verifyToken, getPackageStats);
-router.get("/:packageSlug", getPackageDetailsBySlug);
 
 router.post("/", verifyToken, upload.array("images"), packageValidation(), createPackage);
 
 router.put("/:packageId", verifyToken, upload.array("images"), packageValidation(), updatePackage);
 
 router.delete("/:packageId/image/:imageId", verifyToken, deletePackageImage);
+
+//frontend
+router.get("/:packageSlug", getPackageDetailsBySlug);
 
 export default router;

@@ -6,8 +6,11 @@ import verifyToken from "../middleware/verifyToken.middleware";
 
 const router = express.Router();
 
+//admin
+router.post("/refresh-token", verifyToken, refreshToken);
+
+//frontend
 router.post("/register", userRegister);
 router.post("/login", userLoginValidation(), userLogin);
-router.post("/refresh-token", verifyToken, refreshToken);
 
 export default router;

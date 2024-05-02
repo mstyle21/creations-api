@@ -5,11 +5,13 @@ import { categoryValidation } from "../validations/category.validation";
 
 const router = express.Router();
 
-router.get("/", verifyToken, getCategories);
-router.get("/all", getAllCategories);
-
+//admin
 router.post("/", verifyToken, categoryValidation(), createCategory);
 
 router.put("/:categoryId", verifyToken, categoryValidation(), updateCategory);
+
+//frontend
+router.get("/", getCategories);
+router.get("/all", getAllCategories);
 
 export default router;

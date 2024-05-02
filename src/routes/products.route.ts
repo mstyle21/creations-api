@@ -5,6 +5,7 @@ import {
   createProduct,
   deleteProductImage,
   getAllProducts,
+  getAllProductsAndPackages,
   getLatestProductsAndPackages,
   getProductDetailsBySlug,
   getProductStats,
@@ -30,6 +31,7 @@ const upload = multer({ storage: storage, fileFilter: filter });
 router.get("/", verifyToken, getProducts);
 router.get("/all", verifyToken, getAllProducts);
 router.get("/stats", verifyToken, getProductStats);
+router.get("/allProductsAndPackages", verifyToken, getAllProductsAndPackages);
 
 router.post("/", verifyToken, upload.array("images"), productValidation(), createProduct);
 

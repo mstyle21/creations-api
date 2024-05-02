@@ -38,6 +38,7 @@ interface ProductBody {
   materialWeight: string;
   price: string;
   oldPrice?: string;
+  production?: string;
   status: string;
   categories: number[];
   imagesOrder: string;
@@ -109,6 +110,32 @@ export const getProducts = async (req: Request<{}, {}, {}, StatsQuery>, res: Res
   });
 
   return res.status(200).json(paginatedResult(products, countFilteredProducts.length, limit));
+};
+
+export const getAllProductsAndPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
+  let products = await productRepository.find({
+    relations: {
+      categories: true,
+      images: true,
+    },
+  });
+  products = products.map((product) => {
+    return { ...product, type: "product", images: product.images.sort((a, b) => a.order - b.order) };
+  });
+
+  let packages = await packageRepository.find({
+    relations: {
+      category: true,
+      images: true,
+    },
+  });
+  packages = packages.map((packageDetails) => {
+    return { ...packageDetails, type: "package", images: packageDetails.images.sort((a, b) => a.order - b.order) };
+  });
+
+  const items = [...products, ...packages];
+
+  return res.status(200).json(items);
 };
 
 export const getProductsAndPackages = async (req: Request<{}, {}, {}, StatsQuery>, res: Response, next: NextFunction) => {
@@ -258,7 +285,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     return res.status(400).json({ error: errors.array() });
   }
 
-  const { name, width, height, depth, stock, materialWeight, price, oldPrice, status, categories, imagesOrder } = req.body;
+  const { name, width, height, depth, stock, materialWeight, price, oldPrice, production, status, categories, imagesOrder } = req.body;
 
   try {
     const product = new Product();
@@ -270,6 +297,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
     product.materialWeight = materialWeight && materialWeight !== "" ? parseInt(materialWeight) : null;
     product.price = parseInt(price);
     product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
+    product.production = production && production !== "" ? parseInt(production) : null;
     product.status = status;
 
     product.categories = await categoryRepository.findBy({ id: In(categories) });
@@ -291,7 +319,7 @@ export const createProduct = async (req: Request<{}, {}, ProductBody>, res: Resp
 
     product.slug = slug;
 
-    const newProduct = await productRepository.save(product);
+    await productRepository.save(product);
 
     const images = req.files as Express.Multer.File[];
     await uploadProductImages(images, imagesOrder, product);
@@ -309,7 +337,7 @@ export const updateProduct = async (req: Request<{ productId: string }, {}, Prod
     return res.status(400).json({ error: errors.array() });
   }
 
-  const { name, width, height, depth, stock, materialWeight, price, oldPrice, status, categories, imagesOrder } = req.body;
+  const { name, width, height, depth, stock, materialWeight, price, oldPrice, production, status, categories, imagesOrder } = req.body;
 
   const productId = req.params.productId;
 
@@ -330,6 +358,7 @@ export const updateProduct = async (req: Request<{ productId: string }, {}, Prod
   product.materialWeight = materialWeight && materialWeight !== "" ? parseInt(materialWeight) : null;
   product.price = parseInt(price);
   product.oldPrice = oldPrice && oldPrice !== "" ? parseInt(oldPrice) : null;
+  product.production = production && production !== "" ? parseInt(production) : null;
   product.status = status;
 
   product.categories = await categoryRepository.findBy({ id: In(categories) });

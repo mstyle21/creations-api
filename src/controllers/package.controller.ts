@@ -306,9 +306,14 @@ export const deletePackageImage = async (req: Request, res: Response, next: Next
 
   const folderPath = path.join(PACKAGE_IMG_FOLDER, packageImage.package.id.toString());
   const filePath = path.join(folderPath, packageImage.filename);
+  const thumbnailPath = path.join(folderPath, `thumbnail_${packageImage.filename}`);
 
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
+  }
+
+  if (fs.existsSync(thumbnailPath)) {
+    fs.unlinkSync(thumbnailPath);
   }
 
   await packageImageRepository.remove(packageImage);

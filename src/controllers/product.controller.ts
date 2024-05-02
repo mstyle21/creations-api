@@ -387,9 +387,14 @@ export const deleteProductImage = async (req: Request, res: Response, next: Next
 
   const folderPath = path.join(PRODUCT_IMG_FOLDER, productImage.product.id.toString());
   const filePath = path.join(folderPath, productImage.filename);
+  const thumbnailPath = path.join(folderPath, `thumbnail_${productImage.filename}`);
 
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
+  }
+
+  if (fs.existsSync(thumbnailPath)) {
+    fs.unlinkSync(thumbnailPath);
   }
 
   await productImageRepository.remove(productImage);

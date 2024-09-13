@@ -3,7 +3,7 @@ node_modules
 npm-debug.log
 
 # Build artifacts
-dist
+dist/*
 build
 *.log
 
@@ -12,7 +12,7 @@ build
 .gitignore
 
 # Environment files
-.env
+#.env
 
 # System files
 .DS_Store

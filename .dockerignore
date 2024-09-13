@@ -1,0 +1,19 @@
+# Node modules are not needed in the build context
+node_modules
+npm-debug.log
+
+# Build artifacts
+dist
+build
+*.log
+
+# Git-related files and directories
+.git
+.gitignore
+
+# Environment files
+.env
+
+# System files
+.DS_Store
+.vscode

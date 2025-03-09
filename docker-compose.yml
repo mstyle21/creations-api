@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     networks:
       - nginx_network
     depends_on:
@@ -23,6 +23,9 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     networks:
       - nginx_network
+    ports:
+      - "3606:3306"
+      - "36060:33060"
     volumes:
       - ./../creations-api_volume/dbdata:/var/lib/mysql
       - ./../creations-api_volume/uploads:/var/www/html/uploads

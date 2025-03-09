@@ -1,0 +1,32 @@
+services:
+  app:
+    container_name: creations_api_express
+    image: creations_api_express_img
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: dockerfile
+    networks:
+      - nginx_network
+    depends_on:
+      - db
+
+  db:
+    container_name: creations_api_db
+    platform: "linux/amd64"
+    image: mysql:latest
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: $(DB_USERNAME)
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    networks:
+      - nginx_network
+    volumes:
+      - ./../creations-api_volume/dbdata:/var/lib/mysql
+      - ./../creations-api_volume/uploads:/var/www/html/uploads
+
+networks:
+  nginx_network:
+    external: true

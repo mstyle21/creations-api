@@ -14,7 +14,7 @@ RUN npm install && npm install typescript -g
 COPY . .
 
 # Expose the port your app will run on
-EXPOSE 3000
+EXPOSE 7000
 
 # Command to run your app
 RUN npm run build

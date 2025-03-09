@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
-      - nginx_network
+      - creations_network
     depends_on:
       - db
 
@@ -22,14 +22,11 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     networks:
-      - nginx_network
-    ports:
-      - "3606:3306"
-      - "36060:33060"
+      - creations_network
     volumes:
       - ./../creations-api_volume/dbdata:/var/lib/mysql
       - ./../creations-api_volume/uploads:/var/www/html/uploads
 
 networks:
-  nginx_network:
+  creations_network:
     external: true

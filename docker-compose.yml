@@ -8,6 +8,8 @@ services:
       dockerfile: Dockerfile
     networks:
       - creations_network
+    volumes:
+      - ./../creations-api_volume/uploads:/var/www/html/uploads
     depends_on:
       - db
 
@@ -18,14 +20,13 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: $(DB_USERNAME)
+      MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     networks:
       - creations_network
     volumes:
       - ./../creations-api_volume/dbdata:/var/lib/mysql
-      - ./../creations-api_volume/uploads:/var/www/html/uploads
 
 networks:
   creations_network:
